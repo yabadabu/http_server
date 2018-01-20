@@ -10,10 +10,10 @@ $(TARGET) : $(OBJS)
 	$(CC) -o $@ $(OBJS) -lstdc++
 
 $(OBJS_PATH)/%.o : ../%.cpp
-	$(CC) $(CFLAGS) -o $@ $<
+	mkdir -p $(OBJS_PATH) && $(CC) $(CFLAGS) -o $@ $<
 
 $(OBJS_PATH)/%.o : ../tests/%.cpp
-	$(CC) $(CFLAGS) -o $@ $<
+	mkdir -p $(OBJS_PATH) && $(CC) $(CFLAGS) -o $@ $<
 
 run :
 	cd ../tests && ../osx/server
