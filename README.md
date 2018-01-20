@@ -28,7 +28,7 @@ Derive your own class from HTTP::CBaseServer, and implement the method:
   bool onClientRequest(const TRequest& r, TSocket client) override;
 ```
 
-Do whatever you need and write the server results in the client socket. This method is called from the thread which called the server.tick
+Do whatever you need and write the server results in the client socket. This method is called from the thread which called the server.tick or server.runForEver()
 
 The server must open some port and then you can runForEver or poll for activity (with timeout) 
 
@@ -38,3 +38,17 @@ The server must open some port and then you can runForEver or poll for activity 
     return -1;
   server.runForEver();
 ```
+
+If you just want to check for incomming requests and answer at that time just run
+
+```c++
+  CMyServer server;
+  if (!server.open(8080))
+    return -1;
+  do {
+    // .. your other code
+    server.tick(0);
+    // .. your other code
+  }
+```
+
