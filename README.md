@@ -12,9 +12,11 @@ The browser will request two files, an html and the png image.
 
 # Demo OSX
 
+```bash
 cd osx
 make
 make run
+```
 Open a browser and enter http://localhost:8080
 The browser will request two files, an html and the png image.
 
