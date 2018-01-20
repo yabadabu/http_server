@@ -1,24 +1,20 @@
-#include "http_server.h"
 #include <cstdio>
 #include <cassert>
 #include <algorithm>
 #include <cstring>
+#include "http_server.h"
 
 namespace HTTP {
 
   // -------------------------------------------------------
-  char* VBytes::base() {
-    return &(*this->begin());
-  }
-
-  bool VBytes::send(TSocket fd) {
-    auto nbytes_sent = ::send(fd, base(), (int)size(), 0);
+  bool VBytes::send(TSocket fd) const {
+    auto nbytes_sent = ::send(fd, data(), (int)size(), 0);
     return nbytes_sent == size();
   }
 
   bool VBytes::recv(TSocket fd) {
     resize(capacity());
-    auto nbytes_read = ::recv(fd, base(), (int)size(), 0);
+    auto nbytes_read = ::recv(fd, data(), (int)size(), 0);
     if (nbytes_read > 0)
       resize(nbytes_read);
     return nbytes_read > 0;
@@ -29,7 +25,7 @@ namespace HTTP {
     va_start(argp, fmt);
     resize(512);
     while (true) {
-      int n = vsnprintf(base(), size(), fmt, argp);   // Copies N characters // vsnprintf_s could be used, has the same behavior and interrupts the program
+      int n = vsnprintf(data(), size(), fmt, argp);   // Copies N characters // vsnprintf_s could be used, has the same behavior and interrupts the program
       if (n >= size()) {
         resize(n + 1);
       }
@@ -67,7 +63,7 @@ namespace HTTP {
 
     method = UNSUPPORTED;
 
-    char* bol = buf.base();               // begin of line
+    char* bol = buf.data();               // begin of line
     const char* eob = bol + buf.size();   // end of buffer
     while (true) {
       auto eol = bol;                     // end of line
@@ -149,8 +145,8 @@ namespace HTTP {
   // -------------------------------------------------------
   TSocket CBaseServer::acceptNewClient() {
     struct sockaddr_in client_addr;
-    int addr_len = sizeof(client_addr);
-    auto client = accept(server, (struct sockaddr *)&client_addr, &addr_len);
+    socklen_t addr_len = sizeof(client_addr);
+    auto client = ::accept(server, (struct sockaddr *)&client_addr, &addr_len);
     printf("New client at socket %d\n", (int)client);
     return client;
   }
@@ -209,6 +205,31 @@ namespace HTTP {
     }
 
     return true;
+  }
+
+  // -------------------------------------------------------
+  void CBaseServer::sendAnswer( TSocket client, const VBytes& answer_data, const char* content_type ) {
+
+    assert( content_type );
+
+    time_t raw_time;
+    time(&raw_time);
+    struct tm* time_info = gmtime(&raw_time);
+
+    VBytes header;
+    header.format(
+      "HTTP/1.1 200 OK\r\n"
+      "Content-Length: %d\r\n"
+      "Content-Type: %s\r\n"
+      "Date: %s GMT\r\n"
+      "\r\n"
+      , (int)answer_data.size()
+      , content_type
+      , asctime(time_info)
+      );
+    header.send(client);
+    answer_data.send(client);
+
   }
 
   // -------------------------------------------------------

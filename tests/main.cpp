@@ -26,24 +26,7 @@ public:
       content_type = "image/png";
     }
 
-    time_t raw_time;
-    time(&raw_time);
-    struct tm* time_info = gmtime(&raw_time);
-
-    VBytes header;
-    header.format(
-      "HTTP/1.1 200 OK\r\n"
-      "Content-Length: %d\r\n"
-      "Content-Type: %s\r\n"
-      "Date: %s GMT\r\n"
-      "Last - Modified: Wed, 22 Jul 2009 19 : 15 : 56 GMT\r\n"
-      "\r\n"
-      , (int)ans->size()
-      , content_type
-      , asctime(time_info)
-      );
-    header.send(client);
-    ans->send(client);
+    sendAnswer( client, *ans, content_type );
     return false;
   }
 
@@ -51,9 +34,12 @@ public:
 
 int main()
 {
+
+#ifdef WIN32
   WSADATA wsa;
   if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
     return -1;
+#endif
 
   CMyServer server;
   if (!server.open(8080))
