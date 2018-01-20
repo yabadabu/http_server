@@ -4,9 +4,17 @@ Super basic http server in c++
 Just a simple c++ class to serve HTTP requests in a port. No thread is created by this class, but with the interface you can poll
 for activity before timeout.
 
-# Demo
+# Demo VC2015
 
 Open VC2015. Compile the solution on folder vc2015 and run it.
+Open a browser and enter http://localhost:8080
+The browser will request two files, an html and the png image.
+
+# Demo OSX
+
+cd osx
+make
+make run
 Open a browser and enter http://localhost:8080
 The browser will request two files, an html and the png image.
 
