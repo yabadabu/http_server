@@ -4,6 +4,34 @@
 #include <cstring>
 #include "http_server.h"
 
+// -------------------------------------------------------------------
+// Enable compression by embeeding the miniz.c source code here
+// Define DISABLE_MINIZ_SUPPORT to fully discard it
+#if DISABLE_MINIZ_SUPPORT
+
+bool compress( const HTTP::VBytes &src, HTTP::VBytes &dst ) {
+  return false;
+}
+
+#else
+
+#define MINIZ_NO_ARCHIVE_APIS
+#define MINIZ_NO_STDIO
+#include "../miniz.h"
+#include "../miniz.c"
+bool compress( const HTTP::VBytes &src, HTTP::VBytes &dst ) {
+  auto dst_sz = ::compressBound(src.size());
+  dst.resize( dst_sz );
+  auto cmp_status = ::compress((unsigned char*) dst.data(), &dst_sz, (unsigned char*) src.data(), src.size());
+  if (cmp_status != Z_OK) 
+    return false;
+  dst.resize( dst_sz );
+  return true;
+}
+
+#endif
+
+
 namespace HTTP {
 
   // -------------------------------------------------------
@@ -56,10 +84,20 @@ namespace HTTP {
     auto it = std::find(begin(), end(), s);
     assert(it != end());
     erase(it);
-  } 
+  }
+
 
   // -------------------------------------------------------
-  bool CBaseServer::TRequest::parse(VBytes& buf) {
+  const char* CBaseServer::TRequest::getHeader( const char* title ) const {
+    for( int i=0; i<nlines; ++i ) {
+      if( strcmp( title, lines[i].title ) == 0 )
+        return lines[i].value;
+    }
+    return nullptr;
+  }
+
+  // -------------------------------------------------------
+  bool CBaseServer::TRequest::parse(VBytes& buf, bool trace) {
 
     method = UNSUPPORTED;
 
@@ -80,11 +118,31 @@ namespace HTTP {
         auto idx = url.find_last_of(' ');
         if (idx != std::string::npos)
           url.resize(idx);
-        printf(">> GET %s\n", url.c_str());
+
+        if( trace ) printf("request.get: %s\n", url.c_str());
       }
       else {
+
+        // Split header in title and value
+        auto title = bol;
+        auto value = bol;
+        while( *value != ':' && *value != 0x00 ) 
+          ++value;
+        if( *value == ':' ) {
+          *value++ = 0x00;
+          if( *value == ' ' )
+            value++;
+        }
+  
+        if( nlines < max_header_lines ) {
+          auto& h = lines[ nlines ];
+          h.title = title;
+          h.value = value;
+          nlines++;
+        }
+
         // Other headers
-        //printf("Line:%s\n", bol);
+        if( trace ) printf("request.header: '%s' => '%s'\n", title, value);
       }
 
       bol = eol + 2;                      // Skip \r and \n
@@ -147,7 +205,7 @@ namespace HTTP {
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(client_addr);
     auto client = ::accept(server, (struct sockaddr *)&client_addr, &addr_len);
-    printf("New client at socket %d\n", (int)client);
+    if( trace ) printf("http_server.New client at socket %d\n", (int)client);
     return client;
   }
 
@@ -196,7 +254,7 @@ namespace HTTP {
         }
         else {
           TRequest r;
-          if (r.parse(inbuf)) {
+          if (r.parse(inbuf, trace)) {
             if (!onClientRequest(r, s))
               active_sockets.remove(s);
           }
@@ -208,7 +266,12 @@ namespace HTTP {
   }
 
   // -------------------------------------------------------
-  void CBaseServer::sendAnswer( TSocket client, const VBytes& answer_data, const char* content_type ) {
+  void CBaseServer::sendAnswer( 
+    TSocket client, 
+    const VBytes& answer_data, 
+    const char* content_type, 
+    const char* content_encoding 
+  ) {
 
     assert( content_type );
 
@@ -216,16 +279,24 @@ namespace HTTP {
     time(&raw_time);
     struct tm* time_info = gmtime(&raw_time);
 
+    // If the user specifies an encoding type, added the corresponding header answer
+    char extra_header[64];
+    if( content_encoding ) 
+      sprintf( extra_header, "Content-Encoding: %s\r\n", content_encoding );
+
+    // Format the full header
     VBytes header;
     header.format(
       "HTTP/1.1 200 OK\r\n"
       "Content-Length: %d\r\n"
       "Content-Type: %s\r\n"
       "Date: %s GMT\r\n"
+      "%s"
       "\r\n"
       , (int)answer_data.size()
       , content_type
       , asctime(time_info)
+      , content_encoding ? extra_header : ""
       );
     header.send(client);
     answer_data.send(client);
@@ -233,10 +304,25 @@ namespace HTTP {
   }
 
   // -------------------------------------------------------
+  void CBaseServer::compressAndSendAnswer( 
+    TSocket client, 
+    const VBytes& answer_data, 
+    const char* content_type
+  ) {
+    VBytes zans;
+    if( compress( answer_data, zans ) ) {
+      if( trace ) printf( "Compressing answer from %ld to %ld bytes\n", answer_data.size(), zans.size());
+      sendAnswer( client, zans, content_type, "deflate");
+    }
+    else
+      sendAnswer( client, answer_data, content_type );
+  }
+
+  // -------------------------------------------------------
   void CBaseServer::runForEver() {
     while (true) {
       if (!tick(1000000))
-        printf(".\n");
+        if( trace ) printf(".\n");
     };
   }
 

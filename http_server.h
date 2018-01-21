@@ -43,10 +43,23 @@ public:
 
   // -------------------------------------------------------
   struct TRequest {
+
+    struct THeaderLine {
+      const char* title;
+      const char* value;
+    };
+
     enum eMethod { GET, UNSUPPORTED };
     eMethod     method;
     std::string url;
-    bool parse(VBytes& buf);
+    
+    // Save header lines
+    static const int max_header_lines = 16;
+    THeaderLine lines[max_header_lines];
+    int         nlines = 0;
+    const char* getHeader( const char* title ) const;
+
+    bool parse(VBytes& buf, bool trace);
   };
 
 private:
@@ -70,7 +83,19 @@ private:
   TActivity activity;
 
 protected:
-  void sendAnswer( TSocket client, const VBytes& answer_data, const char* content_type );
+  
+  void sendAnswer( 
+      TSocket client
+    , const VBytes& answer_data
+    , const char* content_type
+    , const char* content_encoding = nullptr    // gzip, deflate, br or null
+    );
+
+  void compressAndSendAnswer( 
+      TSocket client
+    , const VBytes& answer_data
+    , const char* content_type
+    );
 
 public:
 
@@ -83,6 +108,7 @@ public:
   // This will block for timeout_usecs at most. 0 just to poll
   bool tick(unsigned timeout_usecs);
   void runForEver();
+  bool trace = false;
 };
 
 }

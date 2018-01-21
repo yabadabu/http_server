@@ -9,7 +9,7 @@ TARGET = server
 $(TARGET) : $(OBJS)
 	$(CC) -o $@ $(OBJS) -lstdc++
 
-$(OBJS_PATH)/%.o : ../%.cpp
+$(OBJS_PATH)/%.o : ../%.cpp ../http_server.h
 	mkdir -p $(OBJS_PATH) && $(CC) $(CFLAGS) -o $@ $<
 
 $(OBJS_PATH)/%.o : ../tests/%.cpp
@@ -17,5 +17,8 @@ $(OBJS_PATH)/%.o : ../tests/%.cpp
 
 run :
 	cd ../tests && ../osx/server
+
+clean : 
+	rm $(OBJS)
 
 $(info OBJS = $(OBJS))

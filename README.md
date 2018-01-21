@@ -4,6 +4,8 @@ Super basic http server in c++
 Just a simple c++ class to serve HTTP requests in a port. No thread is created by this class, but with the interface you can poll
 for activity before timeout.
 
+Uses miniz library to compress answers to the client (taken from https://github.com/richgel999/miniz).
+
 # Demo VC2015
 
 Open VC2015. Compile the solution on folder vc2015 and run it.
