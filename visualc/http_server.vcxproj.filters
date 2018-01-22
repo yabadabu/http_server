@@ -7,10 +7,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="..\http_server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\http_server.cpp">
+    <ClCompile Include="..\tests\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

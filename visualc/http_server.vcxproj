@@ -147,7 +147,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\http_server.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="..\tests\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\http_server.h" />

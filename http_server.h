@@ -3,9 +3,9 @@
 
 #if defined( _WIN32 )
 
-#define _CRT_SECURE_NO_WARNINGS
 #include <WinSock2.h>
 typedef SOCKET TSocket;
+typedef int socklen_t;
 #else
 
 #include <unistd.h>

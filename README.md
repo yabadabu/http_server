@@ -1,14 +1,16 @@
 # http server
 Super basic http server in c++
 
-Just a simple c++ class to serve HTTP requests in a port. No thread is created by this class, but with the interface you can poll
-for activity before timeout.
+Just a simple c++ class to serve HTTP requests in a port. No thread is created by this class, but with the interface you can poll for activity before timeout.
+
+No argument parsing or fancy checkings. But it's super easy to return data from a mobile app
+back to a PC.
 
 Uses miniz library to compress answers to the client (taken from https://github.com/richgel999/miniz).
 
-# Demo VC2015
+# Demo VisualStudio
 
-Open VC2015. Compile the solution on folder vc2015 and run it.
+Open VisualStudio (2015/2017). Compile the solution on folder visualc and run it.
 Open a browser and enter http://localhost:8080
 The browser will request two files, an html and the png image.
 
@@ -32,16 +34,8 @@ Derive your own class from HTTP::CBaseServer, and implement the method:
 
 Do whatever you need and write the server results in the client socket. This method is called from the thread which called the server.tick or server.runForEver()
 
-The server must open some port and then you can runForEver or poll for activity (with timeout) 
-
-```c++
-  CMyServer server;
-  if (!server.open(8080))
-    return -1;
-  server.runForEver();
-```
-
-If you just want to check for incomming requests and answer at that time just run
+You probably want to do our own stuff and check for activity periodically. The argument
+in the tick method is the amount of time (in usecs) to wait before returning. 0 will wait nothing
 
 ```c++
   CMyServer server;

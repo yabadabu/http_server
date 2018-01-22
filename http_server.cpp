@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <cstdio>
 #include <cassert>
 #include <algorithm>
@@ -317,7 +318,7 @@ namespace HTTP {
   ) {
     VBytes zans;
     if( compress( answer_data, zans ) ) {
-      if( trace ) printf( "Compressing answer from %ld to %ld bytes\n", answer_data.size(), zans.size());
+      if( trace ) printf( "Compressing answer from %d to %d bytes\n", (int)answer_data.size(), (int)zans.size());
       sendAnswer( client, zans, content_type, "deflate");
     }
     else
