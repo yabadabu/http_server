@@ -15,10 +15,16 @@ bool compress( const HTTP::VBytes &src, HTTP::VBytes &dst ) {
 
 #else
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcomma"
+
 #define MINIZ_NO_ARCHIVE_APIS
 #define MINIZ_NO_STDIO
-#include "../miniz.h"
-#include "../miniz.c"
+#include "miniz.h"
+#include "miniz.c"
+
+#pragma clang diagnostic pop
+
 bool compress( const HTTP::VBytes &src, HTTP::VBytes &dst ) {
   auto dst_sz = ::compressBound(src.size());
   dst.resize( dst_sz );
