@@ -45,12 +45,15 @@ public:
   struct TRequest {
 
     struct THeaderLine {
-      const char* title;
-      const char* value;
+      const char* title;    // 'User-Agent'
+      const char* value;    // 'curl/7.53.0'
     };
 
+    // only supporting GET
     enum eMethod { GET, UNSUPPORTED };
     eMethod     method;
+
+    // / or /index.html...
     std::string url;
     
     // Save header lines
@@ -58,8 +61,12 @@ public:
     THeaderLine lines[max_header_lines];
     int         nlines = 0;
     const char* getHeader( const char* title ) const;
+    bool headerContains(const char* title, const char* text_in_header) const;
 
     bool parse(VBytes& buf, bool trace);
+
+    // Who has generated the request
+    TSocket     client;
   };
 
 private:
@@ -85,21 +92,22 @@ private:
 protected:
   
   void sendAnswer( 
-      TSocket client
+      const TRequest&   r
     , const VBytes& answer_data
     , const char* content_type
     , const char* content_encoding = nullptr    // gzip, deflate, br or null
     );
 
+  // Will try to compress your answer automatically if the client suppots compression
   void compressAndSendAnswer( 
-      TSocket client
+      const TRequest&   r
     , const VBytes& answer_data
     , const char* content_type
     );
 
 public:
 
-  virtual bool onClientRequest(const TRequest& r, TSocket client) = 0;
+  virtual bool onClientRequest(const TRequest& r) = 0;
   virtual ~CBaseServer();
 
   bool open(int port);

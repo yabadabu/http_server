@@ -27,9 +27,9 @@ bool compress( const HTTP::VBytes &src, HTTP::VBytes &dst ) {
 #pragma clang diagnostic pop
 
 bool compress( const HTTP::VBytes &src, HTTP::VBytes &dst ) {
-  auto dst_sz = ::compressBound(src.size());
+  auto dst_sz = ::compressBound((mz_ulong)src.size());
   dst.resize( dst_sz );
-  auto cmp_status = ::compress((unsigned char*) dst.data(), &dst_sz, (unsigned char*) src.data(), src.size());
+  auto cmp_status = ::compress((unsigned char*) dst.data(), &dst_sz, (unsigned char*) src.data(),  (mz_ulong) src.size());
   if (cmp_status != Z_OK) 
     return false;
   dst.resize( dst_sz );
@@ -93,6 +93,13 @@ namespace HTTP {
     erase(it);
   }
 
+  // -------------------------------------------------------
+  bool CBaseServer::TRequest::headerContains(const char* title, const char* text_in_header) const {
+    auto h = getHeader(title);
+    if (!h) return false;
+    auto p = strstr(h, text_in_header);
+    return p != nullptr;
+  }
 
   // -------------------------------------------------------
   const char* CBaseServer::TRequest::getHeader( const char* title ) const {
@@ -261,8 +268,9 @@ namespace HTTP {
         }
         else {
           TRequest r;
+          r.client = s;
           if (r.parse(inbuf, trace)) {
-            if (!onClientRequest(r, s))
+            if (!onClientRequest(r))
               active_sockets.remove(s);
           }
         }
@@ -274,7 +282,7 @@ namespace HTTP {
 
   // -------------------------------------------------------
   void CBaseServer::sendAnswer( 
-    TSocket client, 
+    const TRequest& r,
     const VBytes& answer_data, 
     const char* content_type, 
     const char* content_encoding 
@@ -305,24 +313,24 @@ namespace HTTP {
       , asctime(time_info)
       , content_encoding ? extra_header : ""
       );
-    header.send(client);
-    answer_data.send(client);
+    header.send(r.client);
+    answer_data.send(r.client);
 
   }
 
   // -------------------------------------------------------
   void CBaseServer::compressAndSendAnswer( 
-    TSocket client, 
+    const TRequest& r,
     const VBytes& answer_data, 
     const char* content_type
   ) {
     VBytes zans;
-    if( compress( answer_data, zans ) ) {
+    if( r.headerContains("Accept-Encoding", "deflate") && compress( answer_data, zans ) ) {
       if( trace ) printf( "Compressing answer from %d to %d bytes\n", (int)answer_data.size(), (int)zans.size());
-      sendAnswer( client, zans, content_type, "deflate");
+      sendAnswer(r, zans, content_type, "deflate");
     }
     else
-      sendAnswer( client, answer_data, content_type );
+      sendAnswer(r, answer_data, content_type );
   }
 
   // -------------------------------------------------------

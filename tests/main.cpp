@@ -15,7 +15,7 @@ public:
     star.read("star.png");
     index.read("index.html");
   }
-  bool onClientRequest(const TRequest& r, TSocket client) override {
+  bool onClientRequest(const TRequest& r) override {
 
     const char* content_type = "text/html";
     const char* content_encoding = nullptr;
@@ -25,7 +25,7 @@ public:
       ans = &index;
       content_type = "text/html";
       // Let http compress our answer 
-      compressAndSendAnswer( client, *ans, content_type );
+      compressAndSendAnswer( r, *ans, content_type );
       return false;
     }
     else if (r.url == "/gidx") {
@@ -40,7 +40,7 @@ public:
       content_type = "image/png";
     }
 
-    sendAnswer( client, *ans, content_type, content_encoding );
+    sendAnswer( r, *ans, content_type, content_encoding );
 
     return false;
   }
