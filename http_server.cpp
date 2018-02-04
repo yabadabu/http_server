@@ -6,7 +6,8 @@
 #include "http_server.h"
 
 // -------------------------------------------------------------------
-// Enable compression by embeeding the miniz.c source code here
+// Enable compression by embedding the miniz.c source code here
+// This reduces the file size by 100Kb.
 // Define DISABLE_MINIZ_SUPPORT to fully discard it
 #if DISABLE_MINIZ_SUPPORT
 
@@ -187,6 +188,9 @@ namespace HTTP {
   // -------------------------------------------------------
   bool CBaseServer::TActivity::wait(VSockets& sockets, unsigned timeout_usecs) {
 
+    if( sockets.empty() )
+      return false;
+    
     FD_ZERO(&fds);
     auto max_fd = sockets[0];
     for (auto s : sockets) {
