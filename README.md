@@ -29,10 +29,10 @@ The browser will request two files, an html and the png image.
 Derive your own class from HTTP::CBaseServer, and implement the method: 
 
 ```c++
-  bool onClientRequest(const TRequest& r, TSocket client) override;
+  bool onClientRequest(const TRequest& r) override;
 ```
 
-Do whatever you need and write the server results in the client socket. This method is called from the thread which called the server.tick or server.runForEver()
+Do whatever you need and write the server results in the client socket. This method is called from the thread which called the server.tick or server.runForEver(). See the example at example/main.cpp
 
 You probably want to do our own stuff and check for activity periodically. The argument
 in the tick method is the amount of time (in usecs) to wait before returning. 0 will wait nothing
