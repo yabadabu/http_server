@@ -1,4 +1,4 @@
-SRCS_PATHS = ../tests ..
+SRCS_PATHS = ../example ..
 SRCS = $(foreach p,$(SRCS_PATHS),$(wildcard $(p)/*.cpp))
 OBJS_PATH = objs
 OBJS = $(foreach f,$(SRCS),$(OBJS_PATH)/$(basename $(notdir $(f))).o)
@@ -12,11 +12,11 @@ $(TARGET) : $(OBJS)
 $(OBJS_PATH)/%.o : ../%.cpp ../http_server.h
 	mkdir -p $(OBJS_PATH) && $(CC) $(CFLAGS) -o $@ $<
 
-$(OBJS_PATH)/%.o : ../tests/%.cpp
+$(OBJS_PATH)/%.o : ../example/%.cpp
 	mkdir -p $(OBJS_PATH) && $(CC) $(CFLAGS) -o $@ $<
 
 run :
-	cd ../tests && ../osx/server
+	cd ../example && ../osx/server
 
 clean : 
 	rm $(OBJS)
