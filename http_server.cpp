@@ -102,6 +102,28 @@ namespace HTTP {
     return p != nullptr;
   }
 
+  std::string CBaseServer::TRequest::getURIParam(const char* title) const {
+    std::string::size_type start = url.find(title);
+    if( start == std::string::npos )
+      return std::string{};
+    std::string::size_type equal = url.find('=', start);
+    if( equal == std::string::npos )
+      return std::string{};
+    equal++;
+    std::string::size_type end = url.find('&', equal);
+    if( end == std::string::npos )
+      end = url.size();
+    return url.substr(equal, end - equal);
+  } 
+
+  //   /path/to/doc?id=23&q=str. => ath/to/doc
+  std::string CBaseServer::TRequest::getURLPath() const {
+    std::string::size_type c = url.find('?');
+    if( c == std::string::npos )
+      c = url.size();
+    return url.substr( 0, c );
+  }
+
   // -------------------------------------------------------
   const char* CBaseServer::TRequest::getHeader( const char* title ) const {
     for( int i=0; i<nlines; ++i ) {
@@ -168,19 +190,25 @@ namespace HTTP {
   // -------------------------------------------------------
   bool CBaseServer::createServer(int port) {
     server = ::socket(AF_INET, SOCK_STREAM, 0);
-    if (server < 0)
+    if (server < 0) {
+      printf( "createServer.socket failed\n");
       return false;
+    }
 
     struct sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(port);
 
-    if (bind(server, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+    if (bind(server, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+      printf( "createServer.bind failed\n");
       return false;
+    }
 
-    if (listen(server, 5) < 0)
+    if (listen(server, 5) < 0) {
+      printf( "createServer.listen failed\n");
       return false;
+    }
 
     return true;
   }

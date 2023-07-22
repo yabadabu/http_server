@@ -57,11 +57,13 @@ public:
     std::string url;
     
     // Save header lines
-    static const int max_header_lines = 16;
+    static const int max_header_lines = 64;
     THeaderLine lines[max_header_lines];
     int         nlines = 0;
     const char* getHeader( const char* title ) const;
     bool headerContains(const char* title, const char* text_in_header) const;
+    std::string getURIParam( const char* title ) const;
+    std::string getURLPath() const;
 
     bool parse(VBytes& buf, bool trace);
 
